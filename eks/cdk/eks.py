@@ -16,15 +16,17 @@ class EKS(core.Stack):
             default_capacity = 0
         )
 
-        nodegroup = eks.add_auto_scaling_group_capacity("asg",
-            instance_type = aws_ec2.InstanceType("t3.small"),
-            desired_capacity = 3,
-            min_capacity = 3,
-            max_capacity = 9,
+        mng = eks.add_nodegroup_capacity("mng",
+            instance_types = [aws_ec2.InstanceType("t3.small")],
+            desired_size = 3,
+            min_size = 3,
+            max_size = 9,
+            tags = {'env': 'prod'}
         )
 
         self.output_props = props.copy()
-        self.output_props['asg']= nodegroup.auto_scaling_group_name
+        self.output_props['asg_name']= mng.nodegroup_name
+        self.output_props['asg_arn']= mng.nodegroup_arn
 
     # pass objects to another stack
     @property
