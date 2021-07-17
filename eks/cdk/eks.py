@@ -24,6 +24,8 @@ class EKS(core.Stack):
             tags = {'env': 'prod'}
         )
 
+        mng.role.add_managed_policy(aws_iam.ManagedPolicy.from_aws_managed_policy_name("CloudWatchAgentServerPolicy"))
+
         self.output_props = props.copy()
         self.output_props['asg_name']= mng.nodegroup_name
         self.output_props['asg_arn']= mng.nodegroup_arn
