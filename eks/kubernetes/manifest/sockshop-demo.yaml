@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
       - name: carts-db
-        image: mongo
+        image: public.ecr.aws/hoseok/sockshop/mongo
         ports:
         - name: mongo
           containerPort: 27017
@@ -82,7 +82,7 @@ spec:
     spec:
       containers:
       - name: carts
-        image: weaveworksdemos/carts:0.4.8
+        image: public.ecr.aws/hoseok/sockshop/carts:0.4.8
         ports:
          - containerPort: 80
         env:
@@ -143,7 +143,7 @@ spec:
     spec:
       containers:
       - name: catalogue-db
-        image: weaveworksdemos/catalogue-db:0.3.0
+        image: public.ecr.aws/hoseok/sockshop/catalogue-db:0.3.0
         env:
           - name: MYSQL_ROOT_PASSWORD
             value: fake_password
@@ -189,7 +189,7 @@ spec:
     spec:
       containers:
       - name: catalogue
-        image: weaveworksdemos/catalogue:0.3.5
+        image: public.ecr.aws/hoseok/sockshop/catalogue:0.3.5
         ports:
         - containerPort: 80
         securityContext:
@@ -236,7 +236,7 @@ spec:
     spec:
       containers:
       - name: front-end
-        image: weaveworksdemos/front-end:0.3.12
+        image: public.ecr.aws/hoseok/sockshop/front-end:0.3.12
         resources:
           requests:
             cpu: 100m
@@ -288,7 +288,7 @@ spec:
     spec:
       containers:
       - name: orders-db
-        image: mongo
+        image: public.ecr.aws/hoseok/sockshop/mongo
         ports:
         - name: mongo
           containerPort: 27017
@@ -345,7 +345,7 @@ spec:
     spec:
       containers:
       - name: orders
-        image: weaveworksdemos/orders:0.4.7
+        image: public.ecr.aws/hoseok/sockshop/orders:0.4.7
         env:
          - name: ZIPKIN
            value: zipkin.jaeger.svc.cluster.local
@@ -406,7 +406,7 @@ spec:
     spec:
       containers:
       - name: payment
-        image: weaveworksdemos/payment:0.4.3
+        image: public.ecr.aws/hoseok/sockshop/payment:0.4.3
         ports:
         - containerPort: 80
         securityContext:
@@ -455,7 +455,7 @@ spec:
     spec:
       containers:
       - name: queue-master
-        image: weaveworksdemos/queue-master:0.3.1
+        image: public.ecr.aws/hoseok/sockshop/queue-master:0.3.1
         ports:
         - containerPort: 80
       nodeSelector:
@@ -497,7 +497,7 @@ spec:
     spec:
       containers:
       - name: rabbitmq
-        image: rabbitmq:3.6.8
+        image: public.ecr.aws/hoseok/sockshop/rabbitmq:3.6.8-management
         ports:
         - containerPort: 5672
         securityContext:
@@ -547,7 +547,7 @@ spec:
     spec:
       containers:
       - name: shipping
-        image: weaveworksdemos/shipping:0.4.8
+        image: public.ecr.aws/hoseok/sockshop/shipping:0.4.8
         env:
          - name: ZIPKIN
            value: zipkin.jaeger.svc.cluster.local
@@ -608,7 +608,7 @@ spec:
     spec:
       containers:
       - name: user-db
-        image: weaveworksdemos/user-db:0.4.0
+        image: public.ecr.aws/hoseok/sockshop/user-db:0.4.0
         ports:
         - name: mongo
           containerPort: 27017
@@ -665,7 +665,7 @@ spec:
     spec:
       containers:
       - name: user
-        image: weaveworksdemos/user:0.4.7
+        image: public.ecr.aws/hoseok/sockshop/user:0.4.7
         ports:
         - containerPort: 80
         env:
