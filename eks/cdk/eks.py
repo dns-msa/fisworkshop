@@ -30,7 +30,9 @@ class EKS(core.Stack):
             chart = "aws-cloudwatch-metrics",
             repository = "https://aws.github.io/eks-charts",
             namespace = "amazon-cloudwatch",
-            values = {'clusterName': eks.cluster_name}
+            values = {
+                "clusterName": eks.cluster_name,
+            }
         )
 
         eks.add_helm_chart("aws-for-fluent-bit",
@@ -38,14 +40,16 @@ class EKS(core.Stack):
             repository = "https://aws.github.io/eks-charts",
             namespace = "kube-system",
             values = {
-                'cloudWatch.region': core.Stack.of(self).region,
-                'cloudWatch.logGroupName': f"/aws/containerinsights/{eks.cluster_name}/application"
+                "cloudWatch": {
+                    "region": core.Stack.of(self).region,
+                    "logGroupName": f"/aws/containerinsights/{eks.cluster_name}/application"
+                }
             }
         )
 
         self.output_props = props.copy()
-        self.output_props['asg_name']= mng.nodegroup_name
-        self.output_props['asg_arn']= mng.nodegroup_arn
+        self.output_props['eks'] = eks
+        self.output_props['ng_arn'] = mng.nodegroup_arn
 
     # pass objects to another stack
     @property
