@@ -11,10 +11,15 @@ class CloudWatchAlarm(core.Stack):
 
         alarm = aws_cw.Alarm(self, "cpu-alarm",
             metric = aws_cw.Metric(
-                namespace = "AWS/AutoScaling",
-                metric_name = "CPUUtilization",
+                namespace = "ContainerInsights",
+                metric_name = "pod_cpu_utilization",
                 statistic = "Average",
-                dimensions = dict(AutoScalingGroupName = f"{props['asg_name']}")
+                period = core.Duration.seconds(30),
+                dimensions = dict(
+                    Namespace = "sockshop",
+                    Service = "front-end",
+                    ClusterName = f"{props['eks'].cluster_name}"
+                )
             ),
             comparison_operator = aws_cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
             threshold = 60,
@@ -40,7 +45,7 @@ class FIS(core.Stack):
 
         target = aws_fis.CfnExperimentTemplate.ExperimentTemplateTargetProperty(
             resource_type = "aws:eks:nodegroup",
-            resource_arns = [f"{props['asg_arn']}"],
+            resource_arns = [f"{props['ng_arn']}"],
             selection_mode = "ALL"
         )
 
