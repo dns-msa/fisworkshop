@@ -47,6 +47,32 @@ class EKS(core.Stack):
             }
         )
 
+        mng.role.add_to_policy(aws_iam.PolicyStatement(
+            actions = [
+                "autoscaling:DescribeAutoScalingGroups",
+                "autoscaling:DescribeAutoScalingInstances",
+                "autoscaling:DescribeLaunchConfigurations",
+                "autoscaling:DescribeTags",
+                "autoscaling:SetDesiredCapacity",
+                "autoscaling:TerminateInstanceInAutoScalingGroup",
+                "ec2:DescribeLaunchTemplateVersions"
+            ],
+            effect = aws_iam.Effect.ALLOW,
+            resources = ["*"]
+        ))
+
+        eks.add_helm_chart("cluster-autoscaler",
+            chart = "cluster-autoscaler",
+            repository = "https://kubernetes.github.io/autoscaler",
+            namespace = "kube-system",
+            values = {
+                "awsRegion": core.Stack.of(self).region,
+                "autoDiscovery": {
+                    "clusterName": eks.cluster_name,
+                }
+            }
+        )
+
         self.output_props = props.copy()
         self.output_props['eks'] = eks
         self.output_props['ng_arn'] = mng.nodegroup_arn
