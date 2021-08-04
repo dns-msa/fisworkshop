@@ -4,6 +4,7 @@ from aws_cdk import (
     aws_fis as aws_fis,
     core,
 )
+import os
 
 class CloudWatchAlarm(core.Stack):
     def __init__(self, app: core.App, id: str, props, **kwargs) -> None:
@@ -40,16 +41,21 @@ class FIS(core.Stack):
     def __init__(self, app: core.App, id: str, props, **kwargs) -> None:
         super().__init__(app, id, **kwargs)
 
+        # copy properties
+        self.output_props = props.copy()
+
+        # iam role
         role = aws_iam.Role(self, "fis-role", assumed_by = aws_iam.ServicePrincipal("fis.amazonaws.com"))
         role.add_managed_policy(aws_iam.ManagedPolicy.from_aws_managed_policy_name("AdministratorAccess"))
 
-        target = aws_fis.CfnExperimentTemplate.ExperimentTemplateTargetProperty(
+        # terminate eks nodes experiment
+        terminate_nodes_target = aws_fis.CfnExperimentTemplate.ExperimentTemplateTargetProperty(
             resource_type = "aws:eks:nodegroup",
             resource_arns = [f"{props['ng_arn']}"],
             selection_mode = "ALL"
         )
 
-        action = aws_fis.CfnExperimentTemplate.ExperimentTemplateActionProperty(
+        terminate_nodes_action = aws_fis.CfnExperimentTemplate.ExperimentTemplateActionProperty(
             action_id = "aws:eks:terminate-nodegroup-instances",
             parameters = dict(instanceTerminationPercentage = "40"),
             targets = {'Nodegroups': 'eks-nodes'}
@@ -59,8 +65,8 @@ class FIS(core.Stack):
             self, "eks-terminate-nodes",
             description = "Terminate EKS nodes",
             role_arn = role.role_arn,
-            targets = {'eks-nodes': target},
-            actions = {'eks-terminate-nodes': action},
+            targets = {'eks-nodes': terminate_nodes_target},
+            actions = {'eks-terminate-nodes': terminate_nodes_action},
             stop_conditions = [aws_fis.CfnExperimentTemplate.ExperimentTemplateStopConditionProperty(
                 source = "aws:cloudwatch:alarm",
                 value = f"{props['alarm_arn']}"
@@ -68,7 +74,35 @@ class FIS(core.Stack):
             tags = {'Name': 'Terminate EKS nodes'}
         )
 
-        self.output_props = props.copy()
+        # cpu stress experiment
+        cpu_stress_target = aws_fis.CfnExperimentTemplate.ExperimentTemplateTargetProperty(
+            resource_type = "aws:ec2:instance",
+            resource_tags ={'env': 'prod'},
+            selection_mode = "PERCENT(80)"
+        )
+
+        cpu_stress_action = aws_fis.CfnExperimentTemplate.ExperimentTemplateActionProperty(
+            action_id = "aws:ssm:send-command",
+            parameters = dict(
+                duration = "PT10M",
+                documentArn = "arn:aws:ssm:" + os.environ['CDK_DEFAULT_REGION'] + "::document/AWSFIS-Run-CPU-Stress",
+                documentParameters = "{\"DurationSeconds\": \"600\", \"InstallDependencies\": \"True\", \"CPU\": \"0\"}"
+            ),
+            targets = {'Instances': 'eks-nodes'}
+        )
+
+        aws_fis.CfnExperimentTemplate(
+            self, "eks-cpu-stress",
+            description = "CPU stress on EKS nodes",
+            role_arn = role.role_arn,
+            targets = {'eks-nodes': cpu_stress_target},
+            actions = {'eks-cpu-stress': cpu_stress_action},
+            stop_conditions = [aws_fis.CfnExperimentTemplate.ExperimentTemplateStopConditionProperty(
+                source = "aws:cloudwatch:alarm",
+                value = f"{props['alarm_arn']}"
+            )],
+            tags = {'Name': 'CPU stress on EKS nodes'}
+        )
 
     # pass objects to another stack
     @property
