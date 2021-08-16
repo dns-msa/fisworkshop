@@ -6,7 +6,7 @@ WORK_DIR_PATH=`cd ${SCRIPT_DIR_NAME}; pwd -P`
 
 . ${WORK_DIR_PATH}/chaos-env.sh
 
-#sudo yum install -y jq
+sudo yum install -y jq
 
 cd ${WORK_DIR_PATH}/chaos-stack && npm install && cdk bootstrap && cdk deploy ChaosBaseStack --require-approval never --outputs-file ${CDK_OUTPUT_FILE_CHAOS_BASE_STACK}
 
