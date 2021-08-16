@@ -15,6 +15,6 @@ fi
 echo "Deleting files in the bucket. '${CHAOS_BUCKET_NAME}'"
 aws s3 rm s3://${CHAOS_BUCKET_NAME}/ --recursive
 
-cd ${WORK_DIR_PATH}/chaos-stack && cdk destroy --all
+cd ${WORK_DIR_PATH}/chaos-stack && cdk destroy --all -f
 
 exit 0;

@@ -21,75 +21,81 @@ export class ChaosMonitoringStack extends cdk.Stack {
     super(scope, id, props);
 
     const chaosMonitoringDashboard = new cw.Dashboard(this, 'chaosMonitoringDashboard', {dashboardName: 'chaosMonitoringDashboard', start: '-PT15M'});
-
+    
+    const loadbalancerDimensions = {'LoadBalancer': props.productCompositeAlb.loadBalancerFullName, 'TargetGroup': props.productCompositeListenerTarget.targetGroupFullName};
     chaosMonitoringDashboard.addWidgets(
-        this.createAsgWidget('product-composite', 'CPUUtilization', props.productCompositeAsg.autoScalingGroupName),
-        this.createAsgWidget('product', 'CPUUtilization', props.productAsg.autoScalingGroupName),
-        this.createAsgWidget('recommendation', 'CPUUtilization', props.recommendationAsg.autoScalingGroupName),
-        this.createAsgWidget('review', 'CPUUtilization', props.reviewAsg.autoScalingGroupName),
-        // this.createAsgWidget('eureka', 'CPUUtilization', props.eurekaAsg.autoScalingGroupName),
-        this.createAlbWidget('product-composite', 'RequestCount', props.productCompositeAlb.loadBalancerFullName),
-        this.createAlbWidget('product-composite', 'HTTPCode_ELB_5XX_Count', props.productCompositeAlb.loadBalancerFullName),
-        // this.createAlbWidget('product-composite', 'HTTPCode_ELB_3XX_Count', props.productCompositeAlb.loadBalancerFullName),
-        // this.createAlbWidget('product-composite', 'HTTPCode_ELB_4XX_Count', props.productCompositeAlb.loadBalancerFullName),
-        this.createAlbWithTargetGroupWidget('product-composite', 'TargetResponseTime', props.productCompositeAlb.loadBalancerFullName, props.productCompositeListenerTarget.targetGroupFullName, 'avg'),
-        this.createAlbWithTargetGroupWidget('product-composite', 'TargetResponseTime', props.productCompositeAlb.loadBalancerFullName, props.productCompositeListenerTarget.targetGroupFullName, 'p90'),
-        // this.createAlbWidget('product-composite', 'TargetResponseTime', props.productCompositeAlb.loadBalancerFullName, props.productCompositeListenerTarget.targetGroupFullName, 'p95'),
-        // this.createAlbWidget('product-composite', 'TargetResponseTime', props.productCompositeAlb.loadBalancerFullName, props.productCompositeListenerTarget.targetGroupFullName, 'p99'),
+        this.createAsgWidget('Loadbalancer Count', 
+          [
+            this.createMetric('AWS/ApplicationELB', 'RequestCount', 'sum', loadbalancerDimensions),
+            this.createMetric('AWS/ApplicationELB', 'RequestCountPerTarget', 'sum', loadbalancerDimensions),
+            this.createMetric('AWS/ApplicationELB', 'HTTPCode_Target_2XX_Count', 'sum', loadbalancerDimensions),
+            this.createMetric('AWS/ApplicationELB', 'HTTPCode_Target_3XX_Count', 'sum', loadbalancerDimensions),
+          ]
+        ),
+
+        this.createAsgWidget('Loadbalancer Error Count',
+          [
+            this.createMetric('AWS/ApplicationELB', 'HTTPCode_ELB_4XX_Count', 'sum', {'LoadBalancer': props.productCompositeAlb.loadBalancerFullName}),
+            this.createMetric('AWS/ApplicationELB', 'HTTPCode_ELB_5XX_Count', 'sum', {'LoadBalancer': props.productCompositeAlb.loadBalancerFullName}),
+            this.createMetric('AWS/ApplicationELB', 'HTTPCode_Target_4XX_Count', 'sum', loadbalancerDimensions),
+            this.createMetric('AWS/ApplicationELB', 'HTTPCode_Target_5XX_Count', 'sum', loadbalancerDimensions),
+            
+          ]
+        ),
+        
+        this.createAsgWidget('LoadBalancer TargetResponseTime', 
+          [
+            this.createMetric('AWS/ApplicationELB', 'TargetResponseTime', 'avg', loadbalancerDimensions),
+            this.createMetric('AWS/ApplicationELB', 'TargetResponseTime', 'p99', loadbalancerDimensions),
+            this.createMetric('AWS/ApplicationELB', 'TargetResponseTime', 'p95', loadbalancerDimensions),
+            this.createMetric('AWS/ApplicationELB', 'TargetResponseTime', 'p90', loadbalancerDimensions),
+          ]
+        ),
+        
+        this.createAsgWidget('CPUUtilization',
+          [
+            this.createMetric('AWS/EC2', 'CPUUtilization', 'avg', {'AutoScalingGroupName': props.productCompositeAsg.autoScalingGroupName}),
+            this.createMetric('AWS/EC2', 'CPUUtilization', 'avg', {'AutoScalingGroupName': props.productAsg.autoScalingGroupName}),
+            this.createMetric('AWS/EC2', 'CPUUtilization', 'avg', {'AutoScalingGroupName': props.reviewAsg.autoScalingGroupName}),
+            this.createMetric('AWS/EC2', 'CPUUtilization', 'avg', {'AutoScalingGroupName': props.recommendationAsg.autoScalingGroupName}),
+          ]
+        ),
+        
+        this.createAsgWidget('CPUCreditBalance',
+          [
+            this.createMetric('AWS/EC2', 'CPUCreditBalance', 'avg', {'AutoScalingGroupName': props.productCompositeAsg.autoScalingGroupName}),
+            this.createMetric('AWS/EC2', 'CPUCreditBalance', 'avg', {'AutoScalingGroupName': props.productAsg.autoScalingGroupName}),
+            this.createMetric('AWS/EC2', 'CPUCreditBalance', 'avg', {'AutoScalingGroupName': props.reviewAsg.autoScalingGroupName}),
+            this.createMetric('AWS/EC2', 'CPUCreditBalance', 'avg', {'AutoScalingGroupName': props.recommendationAsg.autoScalingGroupName}),
+          ]
+        ),
+        
+        this.createAsgWidget('CPUCreditUsage',
+          [
+            this.createMetric('AWS/EC2', 'CPUCreditUsage', 'avg', {'AutoScalingGroupName': props.productCompositeAsg.autoScalingGroupName}),
+            this.createMetric('AWS/EC2', 'CPUCreditUsage', 'avg', {'AutoScalingGroupName': props.productAsg.autoScalingGroupName}),
+            this.createMetric('AWS/EC2', 'CPUCreditUsage', 'avg', {'AutoScalingGroupName': props.reviewAsg.autoScalingGroupName}),
+            this.createMetric('AWS/EC2', 'CPUCreditUsage', 'avg', {'AutoScalingGroupName': props.recommendationAsg.autoScalingGroupName}),
+          ]
+        ),
     );
   }
 
-  createAlbWidget(serviceName: string, metricName: string, albName: string, statistic: string = 'sum', namespace: string = 'AWS/ApplicationELB') : cw.GraphWidget {
-    return new cw.GraphWidget({
-      title: serviceName + '/' + metricName + '/' + statistic,
-      width: 12,
-      left: [
-        new cw.Metric({
-          namespace: namespace,
-          metricName: metricName,
-          dimensions: {
-            'LoadBalancer': albName
-          },
-          statistic: statistic,
-          period: cdk.Duration.seconds(1)
-        }),
-      ]
-    })
-  }
-  
-  createAlbWithTargetGroupWidget(serviceName: string, metricName: string, albName: string, targetGroupName: string, statistic: string = 'sum', namespace: string = 'AWS/ApplicationELB') : cw.GraphWidget {
-    return new cw.GraphWidget({
-      title: serviceName + '/' + metricName + '/' + statistic,
-      width: 12,
-      left: [
-        new cw.Metric({
-          namespace: namespace,
-          metricName: metricName,
-          dimensions: {
-            'LoadBalancer': albName,
-            'TargetGroup': targetGroupName
-          },
-          statistic: statistic,
-          period: cdk.Duration.seconds(1)
-        }),
-      ]
-    })
+  createMetric(namespace: string, metricName: string, statistic: string, dimensions: cw.DimensionHash) : cw.Metric {
+    return new cw.Metric({
+      namespace: namespace,
+      metricName: metricName,
+      statistic: statistic,
+      dimensions: dimensions,
+      period: cdk.Duration.seconds(1),
+    });
   }
 
-  createAsgWidget(serviceName: string, metricName: string, asgName: string, statistic: string = 'avg', namespace: string = 'AWS/EC2', ) : cw.GraphWidget {
+  createAsgWidget(title: string, metrics: cw.Metric[] ) : cw.GraphWidget {
     return new cw.GraphWidget({
-      title: serviceName + '/' + metricName + '/' + statistic,
+      title: title,
       width: 12,
-      left: [ new cw.Metric({
-        namespace: namespace,
-        metricName: metricName,
-        dimensions: {
-          'AutoScalingGroupName': asgName,
-        },
-        statistic: statistic,
-        period: cdk.Duration.seconds(1)
-      }),
-      ]
+      left: metrics
     })
   }
 }

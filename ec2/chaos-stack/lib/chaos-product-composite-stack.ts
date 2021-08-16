@@ -41,7 +41,7 @@ export class ChaosProductCompositeStack extends cdk.Stack {
       cpuType: ec2.AmazonLinuxCpuType.X86_64,
     });
 
-    const instanceType = ec2.InstanceType.of(ec2.InstanceClass.M5, ec2.InstanceSize.LARGE);
+    const instanceType = ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO);
 
     this.productCompositeAsg = new asg.AutoScalingGroup(this, 'productCompositeAsg', {
       vpc,
@@ -51,7 +51,7 @@ export class ChaosProductCompositeStack extends cdk.Stack {
       vpcSubnets: vpc.selectSubnets({subnetType: ec2.SubnetType.PRIVATE}),
       securityGroup: props.appSecurityGroup,
       minCapacity: 2,
-      maxCapacity: 2,
+      maxCapacity: 4,
       desiredCapacity: 2,
       instanceMonitoring: asg.Monitoring.DETAILED,
       userData: ec2.UserData.custom(`

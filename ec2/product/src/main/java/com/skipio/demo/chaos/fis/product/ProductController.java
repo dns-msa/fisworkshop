@@ -28,6 +28,7 @@ public class ProductController {
     @GetMapping("/products")
     public List<Product> getProducts(){
         sleep(50 + RandomUtils.nextInt(51));
+        makeStress();
         List<Product> products = new ArrayList<>();
         products.addAll(productMap.values());
 
@@ -37,6 +38,7 @@ public class ProductController {
     @GetMapping("/products/{productId}")
     public Product getProducts(@PathVariable String productId){
         sleep(50 + RandomUtils.nextInt(51));
+        makeStress();
         return productMap.get(productId);
     }
 
@@ -46,5 +48,30 @@ public class ProductController {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+    
+    private void makeStress(){
+        // for(int i=0; i<5; i++){
+            // isPrime( 999331);
+            // isPrime(104729);
+            isPrime(51197);
+        // }
+    }
+
+    private boolean isPrime(int number){
+        if(number <= 1){
+            return false;
+        }
+        if(number == 2){
+            return true;
+        }
+
+        for(int i=2; i<number; i++){
+            if(number % i == 0){
+                return false;
+            }
+        }
+
+        return true;
     }
 }
