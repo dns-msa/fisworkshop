@@ -16,7 +16,7 @@ public class RecommendationService {
         this.restTemplate = restTemplate;
     }
 
-    @CircuitBreaker(name = "recommendation", fallbackMethod = "fallback")
+    // @CircuitBreaker(name = "recommendation", fallbackMethod = "fallback")
     public List<ProductComposite.Recommendation> getRecommendations(String productId){
         List<ProductComposite.Recommendation> recommendations = restTemplate.exchange("http://recommendation/products/"+productId+"/recommendations", HttpMethod.GET, null, new ParameterizedTypeReference<List<ProductComposite.Recommendation>>() {}).getBody();
         return recommendations;
