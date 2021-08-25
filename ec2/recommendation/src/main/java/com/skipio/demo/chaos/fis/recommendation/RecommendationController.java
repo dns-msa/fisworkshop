@@ -38,6 +38,7 @@ public class RecommendationController {
     @GetMapping("/products/{productId}/recommendations")
     public List<Recommendation> getRecommendations(@PathVariable String productId){
         sleep(50 + RandomUtils.nextInt(51));
+        makeStress();
         List<Recommendation> recommendations = new ArrayList<>();
         recommendations.addAll(productRecommendationMap.get(productId).values());
 
@@ -47,6 +48,7 @@ public class RecommendationController {
     @GetMapping("/products/{productId}/recommendations/{recommendationId}")
     public Recommendation getRecommendation(@PathVariable String productId, @PathVariable String recommendationId){
         sleep(50 + RandomUtils.nextInt(51));
+        makeStress();
         return productRecommendationMap.get(productId).get(recommendationId);
     }
 
@@ -56,5 +58,30 @@ public class RecommendationController {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+    
+    private void makeStress(){
+        // for(int i=0; i<50; i++){
+            // isPrime( 999331);
+            // isPrime(104729); 
+            isPrime(51197);
+        // }
+    }
+
+    private boolean isPrime(int number){
+        if(number <= 1){
+            return false;
+        }
+        if(number == 2){
+            return true;
+        }
+
+        for(int i=2; i<number; i++){
+            if(number % i == 0){
+                return false;
+            }
+        }
+
+        return true;
     }
 }

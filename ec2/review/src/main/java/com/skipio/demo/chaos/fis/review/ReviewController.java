@@ -38,6 +38,7 @@ public class ReviewController {
     @GetMapping("/products/{productId}/reviews")
     public List<Review> getReviews(@PathVariable String productId){
         sleep(50 + RandomUtils.nextInt(51));
+        makeStress();
         List<Review> reviews = new ArrayList<>();
         reviews.addAll(productReviewMap.get(productId).values());
 
@@ -47,6 +48,7 @@ public class ReviewController {
     @GetMapping("/products/{productId}/reviews/{reviewId}")
     public Review getReview(@PathVariable String productId, @PathVariable String reviewId){
         sleep(50 + RandomUtils.nextInt(51));
+        makeStress();
         return productReviewMap.get(productId).get(reviewId);
     }
 
@@ -56,5 +58,30 @@ public class ReviewController {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+    
+    private void makeStress(){
+        // for(int i=0; i<5; i++){
+            // isPrime( 999331);
+            // isPrime(104729);
+            isPrime(51197);
+        // }
+    }
+
+    private boolean isPrime(int number){
+        if(number <= 1){
+            return false;
+        }
+        if(number == 2){
+            return true;
+        }
+
+        for(int i=2; i<number; i++){
+            if(number % i == 0){
+                return false;
+            }
+        }
+
+        return true;
     }
 }

@@ -18,7 +18,7 @@ const chaosProductStack = new ChaosProductStack(app, 'ChaosProductStack', { vpc:
 const chaosReviewStack = new ChaosReviewStack(app, 'ChaosReviewStack', { vpc: chaosBaseStack.vpc, appSecurityGroup: chaosBaseStack.appSecurityGroup, eurekaAlbDnsName: chaosEurekaStack.eurekaAlbDnsName, chaosBucket: chaosBaseStack.chaosBucket });
 const chaosRecommendationStack = new ChaosRecommendationStack(app, 'ChaosRecommendationStack', { vpc: chaosBaseStack.vpc, appSecurityGroup: chaosBaseStack.appSecurityGroup, eurekaAlbDnsName: chaosEurekaStack.eurekaAlbDnsName, chaosBucket: chaosBaseStack.chaosBucket });
 const chaosProductCompositeStack = new ChaosProductCompositeStack(app, 'ChaosProductCompositeStack', { vpc: chaosBaseStack.vpc, albSecurityGroup: chaosBaseStack.albSecurityGroup, appSecurityGroup: chaosBaseStack.appSecurityGroup, eurekaAlbDnsName: chaosEurekaStack.eurekaAlbDnsName, chaosBucket: chaosBaseStack.chaosBucket });
-const chaosLoadGeneratorStack = new ChaosLoadGeneratorStack(app, 'ChaosLoadGeneratorStack', { productCompositeAlbDnsName: chaosProductCompositeStack.productCompositeAlb.loadBalancerDnsName });
+const chaosLoadGeneratorStack = new ChaosLoadGeneratorStack(app, 'ChaosLoadGeneratorStack', { productCompositeAlbDnsName: chaosProductCompositeStack.productCompositeAlb.loadBalancerDnsName, chaosBucket: chaosBaseStack.chaosBucket });
 const chaosFisStack = new ChaosFisStack(app, 'ChaosFisStack', {
     productCompositeAlb: chaosProductCompositeStack.productCompositeAlb,
     productCompositeListenerTarget: chaosProductCompositeStack.productCompositeListenerTarget,

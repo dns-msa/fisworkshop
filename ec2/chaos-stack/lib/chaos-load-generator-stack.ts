@@ -1,13 +1,12 @@
 import * as cdk from '@aws-cdk/core';
 import * as ec2 from '@aws-cdk/aws-ec2';
-import * as elbv2 from '@aws-cdk/aws-elasticloadbalancingv2';
-import * as targets from '@aws-cdk/aws-elasticloadbalancingv2-targets';
 import * as iam from "@aws-cdk/aws-iam";
 import * as asg from "@aws-cdk/aws-autoscaling";
-import * as cw from "@aws-cdk/aws-cloudwatch";
+import * as s3 from '@aws-cdk/aws-s3';
 
 interface ChaosLoadGeneratorStackProps extends cdk.StackProps {
   productCompositeAlbDnsName: String,
+  chaosBucket: s3.Bucket,
 }
 
 export class ChaosLoadGeneratorStack extends cdk.Stack {
@@ -32,6 +31,7 @@ export class ChaosLoadGeneratorStack extends cdk.Stack {
           ]
         }
     );
+    props.chaosBucket.grantRead(ec2Role);
 
     const amznLinux = ec2.MachineImage.latestAmazonLinux({
       generation: ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
@@ -41,7 +41,7 @@ export class ChaosLoadGeneratorStack extends cdk.Stack {
       cpuType: ec2.AmazonLinuxCpuType.X86_64,
     });
 
-    const instanceType = ec2.InstanceType.of(ec2.InstanceClass.M5, ec2.InstanceSize.XLARGE);
+    const instanceType = ec2.InstanceType.of(ec2.InstanceClass.C5, ec2.InstanceSize.LARGE);
 
     //https://github.com/nakabonne/ali
     const loadGeneratorAsg = new asg.AutoScalingGroup(this, 'loadGeneratorAsg', {
@@ -59,16 +59,32 @@ export class ChaosLoadGeneratorStack extends cdk.Stack {
         #!/bin/bash
         yum update -y
         yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm && systemctl enable amazon-ssm-agent && systemctl start amazon-ssm-agent
-        yum install -y jq gcc lua-devel git
+        
+        # jmeter install
+        yum install java-11-amazon-corretto -y
+        mkdir -p /root/jmeter && cd /root/jmeter
+        wget https://mirror.navercorp.com/apache//jmeter/binaries/apache-jmeter-5.4.1.zip && unzip apache-jmeter-5.4.1.zip
+        wget https://jmeter-plugins.org/files/packages/jpgc-functions-2.1.zip && unzip jpgc-functions-2.1.zip
+        cp -rf ./lib ./apache-jmeter-5.4.1/ && rm -rf ./lib
+        
+        echo "export ALB_DNS_NAME=${props.productCompositeAlbDnsName}" > start-jmeter.sh
+        echo 'aws s3 cp s3://${props.chaosBucket.bucketName}/jmeter-template.jmx ./jmeter-template.jmx' >> start-jmeter.sh
+        echo "JVM_ARGS=\\"-Xms2048m -Xmx2048m\\"" >> start-jmeter.sh
+        echo "./apache-jmeter-5.4.1/bin/jmeter -n -t ./jmeter-template.jmx -l jmeter-result.txt &" >> start-jmeter.sh && chmod 744 ./start-jmeter.sh
+        ./start-jmeter.sh
+        
         # wrk install
-        cd /root/ && git clone https://github.com/wg/wrk.git && cd wrk && make
-        cp ./wrk /usr/local/bin/
-        echo "wrk -t 128 -c 512 -d 360m http://${props.productCompositeAlbDnsName}/product-composites/product-001 &" > start-wrk.sh && chmod 744 ./start-wrk.sh
-        ./start-wrk.sh
+        #yum install -y jq gcc lua-devel git
+        #cd /root/ && git clone https://github.com/wg/wrk.git && cd wrk && make
+        #cp ./wrk /usr/local/bin/
+        #echo "wrk -t 128 -c 512 -d 120h http://${props.productCompositeAlbDnsName}/product-composites/product-001 &" > start-wrk.sh && chmod 744 ./start-wrk.sh
+        #./start-wrk.sh
+        
         # ali install
-        mkdir -p /root/ali && cd /root/ali
-        rpm -ivh https://github.com/nakabonne/ali/releases/download/v0.7.2/ali_0.7.2_linux_amd64.rpm
-        echo "ali -r 2000 -d 0 -t 10s http://${props.productCompositeAlbDnsName}/product-composites/product-001" > execute-ali.sh && chmod 744 ./execute-ali.sh
+        #mkdir -p /root/ali && cd /root/ali
+        #rpm -ivh https://github.com/nakabonne/ali/releases/download/v0.7.2/ali_0.7.2_linux_amd64.rpm
+        #echo "ali -r 2000 -d 0 -t 10s http://${props.productCompositeAlbDnsName}/product-composites/product-001" > start-ali.sh && chmod 744 ./start-ali.sh
+        #./start-ali.sh
       `)
     });
 

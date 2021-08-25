@@ -14,7 +14,7 @@ aws ssm send-command \
 	--targets '[{"Key":"tag:Name","Values":["ChaosProductCompositeStack/productCompositeAsg"]}]' \
 	--document-name "AWS-RunShellScript" \
 	--max-concurrency 1 \
-	--parameters '{"commands":["#!/bin/bash","pkill -f java && sleep 5", "cd /root/product-composite && sudo sh start.sh && sleep 30"]}'
+	--parameters '{"commands":["#!/bin/bash","pkill -f java && sleep 5", "cd /root/product-composite && sudo sh start.sh 1>/dev/null 2>&1 &", "sleep 30"]}'
 	#--output text
 
 exit 0;

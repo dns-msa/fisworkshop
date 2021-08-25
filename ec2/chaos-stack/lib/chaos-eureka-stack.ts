@@ -38,7 +38,7 @@ export class ChaosEurekaStack extends cdk.Stack {
       cpuType: ec2.AmazonLinuxCpuType.X86_64,
     });
 
-    const instanceType = ec2.InstanceType.of(ec2.InstanceClass.M5, ec2.InstanceSize.LARGE);
+    const instanceType = ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO);
 
 
     this.eurekaAsg = new asg.AutoScalingGroup(this, 'eurekaAsg', {
