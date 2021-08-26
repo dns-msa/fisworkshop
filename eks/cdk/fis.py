@@ -85,7 +85,7 @@ class FIS(core.Stack):
             action_id = "aws:ssm:send-command",
             parameters = dict(
                 duration = "PT10M",
-                documentArn = "arn:aws:ssm:" + os.environ['CDK_DEFAULT_REGION'] + "::document/AWSFIS-Run-CPU-Stress",
+                documentArn = "arn:aws:ssm:" + self.region + "::document/AWSFIS-Run-CPU-Stress",
                 documentParameters = "{\"DurationSeconds\": \"600\", \"InstallDependencies\": \"True\", \"CPU\": \"0\"}"
             ),
             targets = {'Instances': 'eks-nodes'}
@@ -102,6 +102,36 @@ class FIS(core.Stack):
                 value = f"{props['alarm_arn']}"
             )],
             tags = {'Name': 'CPU stress on EKS nodes'}
+        )
+
+        # disk stress experiment
+        disk_stress_target = aws_fis.CfnExperimentTemplate.ExperimentTemplateTargetProperty(
+            resource_type = "aws:ec2:instance",
+            resource_tags ={'env': 'prod'},
+            selection_mode = "COUNT(1)"
+        )
+
+        disk_stress_action = aws_fis.CfnExperimentTemplate.ExperimentTemplateActionProperty(
+            action_id = "aws:ssm:send-command",
+            parameters = dict(
+                duration = "PT10M",
+                documentArn = "arn:aws:ssm:" + self.region + ":" + self.account + ":document/FIS-Run-Disk-Stress",
+                documentParameters = "{\"DurationSeconds\": \"600\", \"InstallDependencies\": \"True\", \"Workers\": \"4\"}"
+            ),
+            targets = {'Instances': 'eks-nodes'}
+        )
+
+        aws_fis.CfnExperimentTemplate(
+            self, "eks-disk-stress",
+            description = "Disk stress on EKS nodes",
+            role_arn = role.role_arn,
+            targets = {'eks-nodes': disk_stress_target},
+            actions = {'eks-disk-stress': disk_stress_action},
+            stop_conditions = [aws_fis.CfnExperimentTemplate.ExperimentTemplateStopConditionProperty(
+                source = "aws:cloudwatch:alarm",
+                value = f"{props['alarm_arn']}"
+            )],
+            tags = {'Name': 'Disk stress on EKS nodes'}
         )
 
     # pass objects to another stack
