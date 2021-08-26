@@ -10,7 +10,7 @@ class DiskStressDocument(core.Stack):
         super().__init__(app, id, **kwargs)
 
         with open('disk-stress.yaml', 'r') as f:
-            doc_content = yaml.load(f)
+            doc_content = yaml.safe_load(f)
 
         aws_ssm.CfnDocument(self, "fis-disk-stress",
             name = 'FIS-Run-Disk-Stress',
