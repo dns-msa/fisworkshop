@@ -54,6 +54,10 @@ export class ChaosLoadGeneratorStack extends cdk.Stack {
       minCapacity: 1,
       maxCapacity: 1,
       desiredCapacity: 1,
+      blockDevices: [{
+        deviceName: '/dev/xvda',
+        volume: asg.BlockDeviceVolume.ebs(30),
+      }], 
       instanceMonitoring: asg.Monitoring.DETAILED,
       userData: ec2.UserData.custom(`
         #!/bin/bash
