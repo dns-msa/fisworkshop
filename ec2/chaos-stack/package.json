@@ -33,6 +33,9 @@
     "module": "^1.2.5",
     "path-parse": "^1.0.7",
     "source-map-support": "^0.5.16",
-    "lodash.template": ">=4.5.0"
+    "lodash.template": ">=4.5.0",
+    "yargs-parser": ">=5.0.1",
+    "braces": ">=2.3.1",
+    "concat-stream": ">=1.5.2"
   }
 }
