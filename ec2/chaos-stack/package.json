@@ -11,24 +11,26 @@
     "cdk": "cdk"
   },
   "devDependencies": {
-    "@aws-cdk/assert": "1.100.0",
-    "@types/jest": "^26.0.10",
+    "@aws-cdk/assert": "1.119.0",
+    "@types/jest": "^26.0.24",
     "@types/node": "10.17.27",
+    "aws-cdk": "1.119.0",
     "jest": "^26.4.2",
     "ts-jest": "^26.2.0",
-    "aws-cdk": "1.100.0",
     "ts-node": "^9.0.0",
-    "typescript": "~3.9.7"
+    "typescript": "^3.9.10"
   },
   "dependencies": {
-    "@aws-cdk/aws-autoscaling": "^1.105.0",
-    "@aws-cdk/aws-cloudwatch": "^1.105.0",
-    "@aws-cdk/aws-ec2": "^1.105.0",
-    "@aws-cdk/aws-elasticloadbalancingv2": "^1.105.0",
-    "@aws-cdk/aws-elasticloadbalancingv2-targets": "^1.105.0",
-    "@aws-cdk/aws-fis": "^1.105.0",
-    "@aws-cdk/core": "1.105.0",
+    "@aws-cdk/aws-autoscaling": "^1.119.0",
+    "@aws-cdk/aws-cloudwatch": "^1.119.0",
+    "@aws-cdk/aws-ec2": "^1.119.0",
+    "@aws-cdk/aws-elasticloadbalancingv2": "^1.119.0",
+    "@aws-cdk/aws-elasticloadbalancingv2-targets": "^1.119.0",
+    "@aws-cdk/aws-fis": "^1.119.0",
+    "@aws-cdk/core": "1.119.0",
+    "glob-parent": "^6.0.1",
     "module": "^1.2.5",
+    "path-parse": "^1.0.7",
     "source-map-support": "^0.5.16"
   }
 }
