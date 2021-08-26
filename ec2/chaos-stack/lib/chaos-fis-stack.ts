@@ -47,10 +47,10 @@ export class ChaosFisStack extends cdk.Stack {
             period: cdk.Duration.seconds(60)
         }),
         threshold: 1,
-        evaluationPeriods: 2,
+        evaluationPeriods: 1,
         treatMissingData: cw.TreatMissingData.MISSING,
         comparisonOperator: cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-        datapointsToAlarm: 2,
+        datapointsToAlarm: 1,
     });
 
     return chaosSteadyStateAlarm;
