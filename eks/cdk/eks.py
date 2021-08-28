@@ -12,7 +12,7 @@ class EKS(core.Stack):
         vpc = aws_ec2.Vpc(self, "vpc", nat_gateways = 1)
         eks = aws_eks.Cluster(self, "eks",
             vpc = vpc,
-            version = aws_eks.KubernetesVersion.V1_20,
+            version = aws_eks.KubernetesVersion.V1_21,
             default_capacity = 0
         )
 
@@ -20,8 +20,7 @@ class EKS(core.Stack):
             instance_types = [aws_ec2.InstanceType("t3.small")],
             desired_size = 3,
             min_size = 3,
-            max_size = 9,
-            tags = {'env': 'prod'}
+            max_size = 9
         )
 
         mng.role.add_managed_policy(aws_iam.ManagedPolicy.from_aws_managed_policy_name("CloudWatchAgentServerPolicy"))
