@@ -74,7 +74,7 @@ class EKS(core.Stack):
 
         self.output_props = props.copy()
         self.output_props['eks'] = eks
-        self.output_props['ng_arn'] = mng.nodegroup_arn
+        self.output_props['ng'] = mng
 
     # pass objects to another stack
     @property

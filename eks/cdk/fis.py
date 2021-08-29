@@ -51,7 +51,7 @@ class FIS(core.Stack):
         # terminate eks nodes experiment
         terminate_nodes_target = aws_fis.CfnExperimentTemplate.ExperimentTemplateTargetProperty(
             resource_type = "aws:eks:nodegroup",
-            resource_arns = [f"{props['ng_arn']}"],
+            resource_arns = [f"{props['ng'].nodegroup_arn}"],
             selection_mode = "ALL"
         )
 
@@ -77,7 +77,8 @@ class FIS(core.Stack):
         # cpu stress experiment
         cpu_stress_target = aws_fis.CfnExperimentTemplate.ExperimentTemplateTargetProperty(
             resource_type = "aws:ec2:instance",
-            resource_tags ={'env': 'prod'},
+            resource_tags = {'eks:cluster-name': f"{props['eks'].cluster_name}"},
+            filters = [{'path': 'State.Name', 'values': ['running']}],
             selection_mode = "PERCENT(80)"
         )
 
@@ -107,8 +108,9 @@ class FIS(core.Stack):
         # disk stress experiment
         disk_stress_target = aws_fis.CfnExperimentTemplate.ExperimentTemplateTargetProperty(
             resource_type = "aws:ec2:instance",
-            resource_tags ={'env': 'prod'},
-            selection_mode = "COUNT(1)"
+            resource_tags = {'eks:cluster-name': f"{props['eks'].cluster_name}"},
+            filters = [{'path': 'State.Name', 'values': ['running']}],
+            selection_mode = "ALL"
         )
 
         disk_stress_action = aws_fis.CfnExperimentTemplate.ExperimentTemplateActionProperty(
