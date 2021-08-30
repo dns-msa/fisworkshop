@@ -28,7 +28,7 @@ parameters:
   Bytes:
     type: String
     description: "The bytes of disk to use (required)."
-    allowedPattern: "^[0-9]+$"
+    allowedPattern: "^[0-9]+(b|k|m|g)$"
   InstallDependencies:
     type: String
     description: "If set to True, Systems Manager installs the required dependencies on the target instances. (default: True)."
@@ -86,6 +86,6 @@ mainSteps:
         - |
           if [ {{ DurationSeconds }} -lt 1 ] || [ {{ DurationSeconds }} -gt 43200 ] ; then echo DurationSeconds parameter value must be between 1 and 43200 && exit; fi
           pgrep stress-ng && echo Another stress-ng command is running, exiting... && exit
-          echo Initiating disk stress for {{ DurationSeconds }} seconds, {{ Workers }} workers, using {{ Bytes }} percent of total available disk...
+          echo Initiating disk stress for {{ DurationSeconds }} seconds, {{ Workers }} workers, using {{ Bytes }} of total available disk...
           stress-ng --fallocate {{ Workers }} --fallocate-bytes {{ Bytes }} -t {{ DurationSeconds }}s --metrics
           echo Finished disk stress.
