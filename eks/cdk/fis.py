@@ -86,7 +86,7 @@ class FIS(core.Stack):
             parameters = dict(
                 duration = "PT10M",
                 documentArn = "arn:aws:ssm:" + self.region + ":" + self.account + ":document/FIS-Run-Disk-Stress",
-                documentParameters = "{\"DurationSeconds\": \"600\", \"InstallDependencies\": \"True\", \"Workers\": \"4\", \"Bytes\": \"15G\"}"
+                documentParameters = "{\"DurationSeconds\": \"600\", \"InstallDependencies\": \"True\", \"Workers\": \"4\", \"Bytes\": \"4g\"}"
             ),
             targets = {'Instances': 'eks-nodes'}
         )
