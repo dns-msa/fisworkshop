@@ -1,41 +1,9 @@
 from aws_cdk import (
-    aws_cloudwatch as aws_cw,
     aws_iam as aws_iam,
     aws_fis as aws_fis,
     core,
 )
 import os
-
-class CloudWatchAlarm(core.Stack):
-    def __init__(self, app: core.App, id: str, props, **kwargs) -> None:
-        super().__init__(app, id, **kwargs)
-
-        alarm = aws_cw.Alarm(self, "cpu-alarm",
-            metric = aws_cw.Metric(
-                namespace = "ContainerInsights",
-                metric_name = "pod_cpu_utilization",
-                statistic = "Average",
-                period = core.Duration.seconds(30),
-                dimensions = dict(
-                    Namespace = "sockshop",
-                    Service = "front-end",
-                    ClusterName = f"{props['eks'].cluster_name}"
-                )
-            ),
-            comparison_operator = aws_cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-            threshold = 60,
-            evaluation_periods = 1,
-            datapoints_to_alarm = 1
-        )
-
-        self.output_props = props.copy()
-        self.output_props['alarm_arn'] = alarm.alarm_arn
-
-    # pass objects to another stack
-    @property
-    def outputs(self):
-        return self.output_props
-
 
 class FIS(core.Stack):
     def __init__(self, app: core.App, id: str, props, **kwargs) -> None:
@@ -69,7 +37,7 @@ class FIS(core.Stack):
             actions = {'eks-terminate-nodes': terminate_nodes_action},
             stop_conditions = [aws_fis.CfnExperimentTemplate.ExperimentTemplateStopConditionProperty(
                 source = "aws:cloudwatch:alarm",
-                value = f"{props['alarm_arn']}"
+                value = f"{props['cpu_alarm'].alarm_arn}"
             )],
             tags = {'Name': 'Terminate EKS nodes'}
         )
@@ -100,7 +68,7 @@ class FIS(core.Stack):
             actions = {'eks-cpu-stress': cpu_stress_action},
             stop_conditions = [aws_fis.CfnExperimentTemplate.ExperimentTemplateStopConditionProperty(
                 source = "aws:cloudwatch:alarm",
-                value = f"{props['alarm_arn']}"
+                value = f"{props['cpu_alarm'].alarm_arn}"
             )],
             tags = {'Name': 'CPU stress on EKS nodes'}
         )
@@ -131,7 +99,7 @@ class FIS(core.Stack):
             actions = {'eks-disk-stress': disk_stress_action},
             stop_conditions = [aws_fis.CfnExperimentTemplate.ExperimentTemplateStopConditionProperty(
                 source = "aws:cloudwatch:alarm",
-                value = f"{props['alarm_arn']}"
+                value = f"{props['disk_alarm'].alarm_arn}"
             )],
             tags = {'Name': 'Disk stress on EKS nodes'}
         )
