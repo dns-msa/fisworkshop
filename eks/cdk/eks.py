@@ -4,6 +4,7 @@ from aws_cdk import (
     aws_iam as aws_iam,
     core,
 )
+import yaml
 
 class EKS(core.Stack):
     def __init__(self, app: core.App, id: str, props, **kwargs) -> None:
@@ -24,6 +25,7 @@ class EKS(core.Stack):
         )
 
         mng.role.add_managed_policy(aws_iam.ManagedPolicy.from_aws_managed_policy_name("CloudWatchAgentServerPolicy"))
+        mng.role.add_managed_policy(aws_iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMManagedInstanceCore"))
 
         eks.add_helm_chart("aws-cloudwatch-metrics",
             chart = "aws-cloudwatch-metrics",
@@ -71,6 +73,11 @@ class EKS(core.Stack):
                 }
             }
         )
+
+        with open('../kubernetes/manifest/ssm-agent.yaml', 'r') as f:
+            manifest = yaml.safe_load(f)
+
+        eks.add_manifest("ssm-agent", manifest)
 
         self.output_props = props.copy()
         self.output_props['eks'] = eks
