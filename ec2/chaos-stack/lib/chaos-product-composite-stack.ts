@@ -51,7 +51,7 @@ export class ChaosProductCompositeStack extends cdk.Stack {
       vpcSubnets: vpc.selectSubnets({subnetType: ec2.SubnetType.PRIVATE}),
       securityGroup: props.appSecurityGroup,
       minCapacity: 2,
-      maxCapacity: 4,
+      maxCapacity: 2,
       desiredCapacity: 2,
       instanceMonitoring: asg.Monitoring.DETAILED,
       userData: ec2.UserData.custom(`
