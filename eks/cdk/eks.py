@@ -4,6 +4,7 @@ from aws_cdk import (
     aws_iam as aws_iam,
     core,
 )
+import yaml
 
 class EKS(core.Stack):
     def __init__(self, app: core.App, id: str, props, **kwargs) -> None:
@@ -12,7 +13,7 @@ class EKS(core.Stack):
         vpc = aws_ec2.Vpc(self, "vpc", nat_gateways = 1)
         eks = aws_eks.Cluster(self, "eks",
             vpc = vpc,
-            version = aws_eks.KubernetesVersion.V1_20,
+            version = aws_eks.KubernetesVersion.V1_21,
             default_capacity = 0
         )
 
@@ -20,11 +21,11 @@ class EKS(core.Stack):
             instance_types = [aws_ec2.InstanceType("t3.small")],
             desired_size = 3,
             min_size = 3,
-            max_size = 9,
-            tags = {'env': 'prod'}
+            max_size = 9
         )
 
         mng.role.add_managed_policy(aws_iam.ManagedPolicy.from_aws_managed_policy_name("CloudWatchAgentServerPolicy"))
+        mng.role.add_managed_policy(aws_iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMManagedInstanceCore"))
 
         eks.add_helm_chart("aws-cloudwatch-metrics",
             chart = "aws-cloudwatch-metrics",
@@ -73,9 +74,14 @@ class EKS(core.Stack):
             }
         )
 
+        with open('../kubernetes/manifest/ssm-agent.yaml', 'r') as f:
+            manifest = yaml.safe_load(f)
+
+        eks.add_manifest("ssm-agent", manifest)
+
         self.output_props = props.copy()
         self.output_props['eks'] = eks
-        self.output_props['ng_arn'] = mng.nodegroup_arn
+        self.output_props['ng'] = mng
 
     # pass objects to another stack
     @property

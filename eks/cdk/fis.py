@@ -1,41 +1,9 @@
 from aws_cdk import (
-    aws_cloudwatch as aws_cw,
     aws_iam as aws_iam,
     aws_fis as aws_fis,
     core,
 )
 import os
-
-class CloudWatchAlarm(core.Stack):
-    def __init__(self, app: core.App, id: str, props, **kwargs) -> None:
-        super().__init__(app, id, **kwargs)
-
-        alarm = aws_cw.Alarm(self, "cpu-alarm",
-            metric = aws_cw.Metric(
-                namespace = "ContainerInsights",
-                metric_name = "pod_cpu_utilization",
-                statistic = "Average",
-                period = core.Duration.seconds(30),
-                dimensions = dict(
-                    Namespace = "sockshop",
-                    Service = "front-end",
-                    ClusterName = f"{props['eks'].cluster_name}"
-                )
-            ),
-            comparison_operator = aws_cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-            threshold = 60,
-            evaluation_periods = 1,
-            datapoints_to_alarm = 1
-        )
-
-        self.output_props = props.copy()
-        self.output_props['alarm_arn'] = alarm.alarm_arn
-
-    # pass objects to another stack
-    @property
-    def outputs(self):
-        return self.output_props
-
 
 class FIS(core.Stack):
     def __init__(self, app: core.App, id: str, props, **kwargs) -> None:
@@ -51,7 +19,7 @@ class FIS(core.Stack):
         # terminate eks nodes experiment
         terminate_nodes_target = aws_fis.CfnExperimentTemplate.ExperimentTemplateTargetProperty(
             resource_type = "aws:eks:nodegroup",
-            resource_arns = [f"{props['ng_arn']}"],
+            resource_arns = [f"{props['ng'].nodegroup_arn}"],
             selection_mode = "ALL"
         )
 
@@ -69,7 +37,7 @@ class FIS(core.Stack):
             actions = {'eks-terminate-nodes': terminate_nodes_action},
             stop_conditions = [aws_fis.CfnExperimentTemplate.ExperimentTemplateStopConditionProperty(
                 source = "aws:cloudwatch:alarm",
-                value = f"{props['alarm_arn']}"
+                value = f"{props['cpu_alarm'].alarm_arn}"
             )],
             tags = {'Name': 'Terminate EKS nodes'}
         )
@@ -77,7 +45,8 @@ class FIS(core.Stack):
         # cpu stress experiment
         cpu_stress_target = aws_fis.CfnExperimentTemplate.ExperimentTemplateTargetProperty(
             resource_type = "aws:ec2:instance",
-            resource_tags ={'env': 'prod'},
+            resource_tags = {'eks:cluster-name': f"{props['eks'].cluster_name}"},
+            filters = [{'path': 'State.Name', 'values': ['running']}],
             selection_mode = "PERCENT(80)"
         )
 
@@ -85,7 +54,7 @@ class FIS(core.Stack):
             action_id = "aws:ssm:send-command",
             parameters = dict(
                 duration = "PT10M",
-                documentArn = "arn:aws:ssm:" + os.environ['CDK_DEFAULT_REGION'] + "::document/AWSFIS-Run-CPU-Stress",
+                documentArn = "arn:aws:ssm:" + self.region + "::document/AWSFIS-Run-CPU-Stress",
                 documentParameters = "{\"DurationSeconds\": \"600\", \"InstallDependencies\": \"True\", \"CPU\": \"0\"}"
             ),
             targets = {'Instances': 'eks-nodes'}
@@ -99,9 +68,40 @@ class FIS(core.Stack):
             actions = {'eks-cpu-stress': cpu_stress_action},
             stop_conditions = [aws_fis.CfnExperimentTemplate.ExperimentTemplateStopConditionProperty(
                 source = "aws:cloudwatch:alarm",
-                value = f"{props['alarm_arn']}"
+                value = f"{props['cpu_alarm'].alarm_arn}"
             )],
             tags = {'Name': 'CPU stress on EKS nodes'}
+        )
+
+        # disk stress experiment
+        disk_stress_target = aws_fis.CfnExperimentTemplate.ExperimentTemplateTargetProperty(
+            resource_type = "aws:ec2:instance",
+            resource_tags = {'eks:cluster-name': f"{props['eks'].cluster_name}"},
+            filters = [{'path': 'State.Name', 'values': ['running']}],
+            selection_mode = "ALL"
+        )
+
+        disk_stress_action = aws_fis.CfnExperimentTemplate.ExperimentTemplateActionProperty(
+            action_id = "aws:ssm:send-command",
+            parameters = dict(
+                duration = "PT10M",
+                documentArn = "arn:aws:ssm:" + self.region + ":" + self.account + ":document/FIS-Run-Disk-Stress",
+                documentParameters = "{\"DurationSeconds\": \"600\", \"InstallDependencies\": \"True\", \"Workers\": \"4\", \"Bytes\": \"4g\"}"
+            ),
+            targets = {'Instances': 'eks-nodes'}
+        )
+
+        aws_fis.CfnExperimentTemplate(
+            self, "eks-disk-stress",
+            description = "Disk stress on EKS nodes",
+            role_arn = role.role_arn,
+            targets = {'eks-nodes': disk_stress_target},
+            actions = {'eks-disk-stress': disk_stress_action},
+            stop_conditions = [aws_fis.CfnExperimentTemplate.ExperimentTemplateStopConditionProperty(
+                source = "aws:cloudwatch:alarm",
+                value = f"{props['disk_alarm'].alarm_arn}"
+            )],
+            tags = {'Name': 'Disk stress on EKS nodes'}
         )
 
     # pass objects to another stack
