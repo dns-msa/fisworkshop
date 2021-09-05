@@ -27,7 +27,8 @@ export class ChaosProductCompositeStack extends cdk.Stack {
           managedPolicies: [
             iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
             iam.ManagedPolicy.fromAwsManagedPolicyName('AWSXRayDaemonWriteAccess'),
-            iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentServerPolicy')
+            iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentServerPolicy'),
+            iam.ManagedPolicy.fromAwsManagedPolicyName('AutoScalingConsoleFullAccess')
           ]
         }
     );
@@ -85,8 +86,24 @@ export class ChaosProductCompositeStack extends cdk.Stack {
         aws s3 cp s3://${props.chaosBucket.bucketName}/app.service  ./app.service
         mv ./app.service /etc/systemd/system/
         systemctl enable app && systemctl start app
+        
+        # complete signal to asg
+        INSTANCE_ID=\`curl http://169.254.169.254/latest/meta-data/instance-id\`
+        aws autoscaling complete-lifecycle-action --lifecycle-action-result CONTINUE \
+          --instance-id $INSTANCE_ID --lifecycle-hook-name productCompositeAsgLc \
+          --auto-scaling-group-name ${this.productCompositeAsg.autoScalingGroupName}
+          --region ${process.env.CDK_DEFAULT_REGION}
       `)
     });
+    
+    const productCompositeAsgLc = new asg.CfnLifecycleHook(this, "productCompositeAsgLc", {
+      autoScalingGroupName: this.productCompositeAsg.autoScalingGroupName,
+      lifecycleTransition: asg.LifecycleTransition.INSTANCE_LAUNCHING,
+      defaultResult: asg.DefaultResult.ABANDON,
+      lifecycleHookName: "productCompositeAsgLc",
+      heartbeatTimeout: 600
+    });
+    
     this.productCompositeAsg.scaleOnCpuUtilization('productCompositeAsgScalingOnCpu', {
       targetUtilizationPercent: 60
     });
