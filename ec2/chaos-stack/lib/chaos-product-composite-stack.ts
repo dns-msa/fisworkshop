@@ -51,7 +51,7 @@ export class ChaosProductCompositeStack extends cdk.Stack {
       vpcSubnets: vpc.selectSubnets({subnetType: ec2.SubnetType.PRIVATE}),
       securityGroup: props.appSecurityGroup,
       minCapacity: 2,
-      maxCapacity: 2,
+      maxCapacity: 4,
       desiredCapacity: 2,
       instanceMonitoring: asg.Monitoring.DETAILED,
       userData: ec2.UserData.custom(`
@@ -62,11 +62,29 @@ export class ChaosProductCompositeStack extends cdk.Stack {
         yum install amazon-cloudwatch-agent -y && amazon-cloudwatch-agent-ctl -a start
         yum install -y https://s3.us-east-2.amazonaws.com/aws-xray-assets.us-east-2/xray-daemon/aws-xray-daemon-3.x.rpm
         mkdir -p /root/xray/ && cd /root/xray && wget https://github.com/aws/aws-xray-java-agent/releases/latest/download/xray-agent.zip && unzip xray-agent.zip
-        mkdir -p /root/log & mkdir -p /root/product-composite && cd /root/product-composite
-        echo 'aws s3 cp s3://${props.chaosBucket.bucketName}/product-composite.jar  ./product-composite.jar' >> start.sh
+        mkdir -p /root/log & mkdir -p /root/app && cd /root/app
+        
+        # start.sh
+        echo '#!/bin/bash' >> start.sh
+        echo 'set -e' >> start.sh
+        echo 'aws s3 cp s3://${props.chaosBucket.bucketName}/product-composite.jar  /root/app/product-composite.jar' >> start.sh
+        echo 'cd /root/app/' >> start.sh
         #echo 'java -jar -javaagent:/root/xray/disco/disco-java-agent.jar=pluginPath=/root/xray/disco/disco-plugins -Dcom.amazonaws.xray.strategy.tracingName=product-composite -Dspring.profiles.active=aws -Deureka.client.serviceUrl.defaultZone=http://${props.eurekaAlbDnsName}/eureka/ -Dlogging.file.path=/root/log product-composite.jar &' >> start.sh
         echo 'java -jar -Dspring.profiles.active=aws -Deureka.client.serviceUrl.defaultZone=http://${props.eurekaAlbDnsName}/eureka/ -Dlogging.file.path=/root/log product-composite.jar &' >> start.sh
-        sh start.sh
+        echo 'echo $! > ./app.pid' >> start.sh
+        chmod 744 ./start.sh
+        
+        # stop.sh
+        echo '#!/bin/bash' >> stop.sh
+        echo 'set -e' >> stop.sh
+        echo 'PID=\`cat /root/app/app.pid\`' >> stop.sh
+        echo 'kill $PID' >> stop.sh
+        chmod 744 ./stop.sh
+        
+        # start service
+        aws s3 cp s3://${props.chaosBucket.bucketName}/app.service  ./app.service
+        mv ./app.service /etc/systemd/system/
+        systemctl enable app && systemctl start app
       `)
     });
     this.productCompositeAsg.scaleOnCpuUtilization('productCompositeAsgScalingOnCpu', {
