@@ -91,7 +91,7 @@ export class ChaosProductCompositeStack extends cdk.Stack {
         
         # complete signal to asg
         INSTANCE_ID=\`curl http://169.254.169.254/latest/meta-data/instance-id\`
-        ASG_ID=\`aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[? Tags[? (Key=='aws:cloudformation:stack-name') && Value=='ChaosProductCompositeStack']]".AutoScalingGroupName --output text\`
+        ASG_ID=\`aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[? Tags[? (Key=='aws:cloudformation:stack-name') && Value=='ChaosProductCompositeStack']]".AutoScalingGroupName --output text --region ${process.env.CDK_DEFAULT_REGION}\`
         aws autoscaling complete-lifecycle-action --lifecycle-action-result CONTINUE \
           --instance-id $INSTANCE_ID --lifecycle-hook-name productCompositeAsgLc \
           --auto-scaling-group-name $ASG_ID \
