@@ -55,7 +55,9 @@ export class ChaosProductCompositeStack extends cdk.Stack {
       maxCapacity: 4,
       desiredCapacity: 2,
       instanceMonitoring: asg.Monitoring.DETAILED,
-      userData: ec2.UserData.custom(`
+    });
+    
+    this.productCompositeAsg.addUserData(`
         #!/bin/bash
         yum update -y
         yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm && systemctl enable amazon-ssm-agent && systemctl start amazon-ssm-agent
@@ -89,12 +91,13 @@ export class ChaosProductCompositeStack extends cdk.Stack {
         
         # complete signal to asg
         INSTANCE_ID=\`curl http://169.254.169.254/latest/meta-data/instance-id\`
+        ASG_ID=\`aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[? Tags[? (Key=='aws:cloudformation:stack-name') && Value=='ChaosProductCompositeStack']]".AutoScalingGroupName --output text\`
         aws autoscaling complete-lifecycle-action --lifecycle-action-result CONTINUE \
           --instance-id $INSTANCE_ID --lifecycle-hook-name productCompositeAsgLc \
-          --auto-scaling-group-name ${this.productCompositeAsg.autoScalingGroupName}
+          --auto-scaling-group-name $ASG_ID
           --region ${process.env.CDK_DEFAULT_REGION}
-      `)
-    });
+    `);
+    
     
     const productCompositeAsgLc = new asg.CfnLifecycleHook(this, "productCompositeAsgLc", {
       autoScalingGroupName: this.productCompositeAsg.autoScalingGroupName,
