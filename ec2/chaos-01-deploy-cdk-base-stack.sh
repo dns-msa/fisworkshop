@@ -14,5 +14,6 @@ CHAOS_BUCKET_NAME=`cat ${CDK_OUTPUT_FILE_CHAOS_BASE_STACK} | jq -r '.ChaosBaseSt
 echo "CHAOS_BUCKET_NAME: ${CHAOS_BUCKET_NAME}"
 
 aws s3 cp ${WORK_DIR_PATH}/chaos-stack/files/jmeter-template.jmx s3://${CHAOS_BUCKET_NAME}/
+aws s3 cp ${WORK_DIR_PATH}/chaos-stack/files/app.service s3://${CHAOS_BUCKET_NAME}/
 
 exit 0;

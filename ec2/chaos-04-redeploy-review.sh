@@ -14,7 +14,7 @@ aws ssm send-command \
 	--targets '[{"Key":"tag:Name","Values":["ChaosReviewStack/reviewAsg"]}]' \
 	--document-name "AWS-RunShellScript" \
 	--max-concurrency 1 \
-	--parameters '{"commands":["#!/bin/bash","pkill -f java && sleep 5", "cd /root/review && sudo sh start.sh 1>/dev/null 2>&1 &", "sleep 30"]}'
+	--parameters '{"commands":["#!/bin/bash","sudo systemctl stop app", "sleep 10", "sudo systemctl start app", "sleep 30"]}'
 	#--output text
 
 exit 0;

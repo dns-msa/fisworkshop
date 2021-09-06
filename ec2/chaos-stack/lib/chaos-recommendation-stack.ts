@@ -58,11 +58,29 @@ export class ChaosRecommendationStack extends cdk.Stack {
         yum install amazon-cloudwatch-agent -y && amazon-cloudwatch-agent-ctl -a start
         yum install -y https://s3.us-east-2.amazonaws.com/aws-xray-assets.us-east-2/xray-daemon/aws-xray-daemon-3.x.rpm
         mkdir -p /root/xray/ && cd /root/xray && wget https://github.com/aws/aws-xray-java-agent/releases/latest/download/xray-agent.zip && unzip xray-agent.zip
-        mkdir -p /root/log & mkdir -p /root/recommendation && cd /root/recommendation
-        echo 'aws s3 cp s3://${props.chaosBucket.bucketName}/recommendation.jar  ./recommendation.jar' >> start.sh
+        mkdir -p /root/log & mkdir -p /root/app && cd /root/app
+        
+        # start.sh
+        echo '#!/bin/bash' >> start.sh
+        echo 'set -e' >> start.sh
+        echo 'aws s3 cp s3://${props.chaosBucket.bucketName}/recommendation.jar  /root/app/recommendation.jar' >> start.sh
+        echo 'cd /root/app/' >> start.sh
         #echo 'java -jar -javaagent:/root/xray/disco/disco-java-agent.jar=pluginPath=/root/xray/disco/disco-plugins -Dcom.amazonaws.xray.strategy.tracingName=recommendation -Dspring.profiles.active=aws -Deureka.client.serviceUrl.defaultZone=http://${props.eurekaAlbDnsName}/eureka/ -Dlogging.file.path=/root/log recommendation.jar &' >> start.sh
         echo 'java -jar -Dspring.profiles.active=aws -Deureka.client.serviceUrl.defaultZone=http://${props.eurekaAlbDnsName}/eureka/ -Dlogging.file.path=/root/log recommendation.jar &' >> start.sh
-        sh start.sh
+        echo 'echo $! > ./app.pid' >> start.sh
+        chmod 744 ./start.sh
+        
+        # stop.sh
+        echo '#!/bin/bash' >> stop.sh
+        echo 'set -e' >> stop.sh
+        echo 'PID=\`cat /root/app/app.pid\`' >> stop.sh
+        echo 'kill $PID' >> stop.sh
+        chmod 744 ./stop.sh
+        
+        # start service
+        aws s3 cp s3://${props.chaosBucket.bucketName}/app.service  ./app.service
+        mv ./app.service /etc/systemd/system/
+        systemctl enable app && systemctl start app
       `)
     });
     this.recommendationAsg.scaleOnCpuUtilization('productCompositeAsgScalingOnCpu', {
