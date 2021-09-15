@@ -64,6 +64,7 @@ class EKS(core.Stack):
 
         eks.add_helm_chart("cluster-autoscaler",
             chart = "cluster-autoscaler",
+            release = "cluster-autoscaler",
             repository = "https://kubernetes.github.io/autoscaler",
             namespace = "kube-system",
             values = {

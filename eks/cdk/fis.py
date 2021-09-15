@@ -35,10 +35,16 @@ class FIS(core.Stack):
             role_arn = role.role_arn,
             targets = {'eks-nodes': terminate_nodes_target},
             actions = {'eks-terminate-nodes': terminate_nodes_action},
-            stop_conditions = [aws_fis.CfnExperimentTemplate.ExperimentTemplateStopConditionProperty(
-                source = "aws:cloudwatch:alarm",
-                value = f"{props['cpu_alarm'].alarm_arn}"
-            )],
+            stop_conditions = [
+                aws_fis.CfnExperimentTemplate.ExperimentTemplateStopConditionProperty(
+                    source = "aws:cloudwatch:alarm",
+                    value = f"{props['cpu_alarm'].alarm_arn}"
+                ),
+                aws_fis.CfnExperimentTemplate.ExperimentTemplateStopConditionProperty(
+                    source = "aws:cloudwatch:alarm",
+                    value = f"{props['svc_health_alarm'].alarm_arn}"
+                )
+            ],
             tags = {'Name': 'Terminate EKS nodes'}
         )
 

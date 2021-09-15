@@ -39,9 +39,28 @@ class CloudWatchAlarm(core.Stack):
             datapoints_to_alarm = 1
         )
 
+        svc_health_alarm = aws_cw.Alarm(self, "svc-health-alarm",
+            metric = aws_cw.Metric(
+                namespace = "ContainerInsights",
+                metric_name = "service_number_of_running_pods",
+                statistic = "Average",
+                period = core.Duration.seconds(10),
+                dimensions = dict(
+                    Namespace = 'sockshop',
+                    Service = 'front-end',
+                    ClusterName = f"{props['eks'].cluster_name}"
+                )
+            ),
+            comparison_operator = aws_cw.ComparisonOperator.LESS_THAN_THRESHOLD,
+            threshold = 1,
+            evaluation_periods = 1,
+            datapoints_to_alarm = 1
+        )
+
         self.output_props = props.copy()
         self.output_props['cpu_alarm'] = cpu_alarm
         self.output_props['disk_alarm'] = disk_alarm
+        self.output_props['svc_health_alarm'] = svc_health_alarm
 
     # pass objects to another stack
     @property
